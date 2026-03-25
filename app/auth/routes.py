@@ -251,6 +251,81 @@ def change_password(current_user):
     
     return jsonify({"message": "Password changed successfully"}), 200
 
+@api_auth.route("/request-reset-password", methods=["POST"])
+def request_password_reset():
+    """Send password reset code to email"""
+
+    data = request.get_json()
+    if not data or not data.get("email"):
+        return jsonify({"error":"Email is required"}),400
+    email = data.get("email")
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error":"User not found"}),404
+     # Generate reset code
+    code = str(random.randint(100000,999999))
+    user.verification_code = code
+    user.code_expiry = datetime.utcnow() + timedelta(minutes=5)
+
+    db.session.commit()
+    #Send email
+    try:
+        msg = Message(
+            "Password Reset Code",
+            recipients =[email]
+        )
+        msg.body = f"Your Password Reset code is {code}\nExpires in 5 min"
+
+        mail.send(msg)
+        return jsonify({"message":"Password reset code sent to you email"}), 200
+    except:
+        return jsonify({"error":"Failed to send reset email"}),500
+    
+@api_auth.route("/reset-password", methods = ["POST"])
+def reset_password():
+    data = request.get_json()
+    required = ("email","code","new_password")
+
+    if not all(data.get(field) for field in required):
+        return jsonify({"error":"Email,Code and New_Password required"}), 400
+    
+    email = data.get("email")
+    code = data.get("code")
+    new_password = data.get("new_password")
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error":"User not found"}),404
+     # Check code
+    if user.verification_code != code:
+        return jsonify({"error":"Invalid Code"}),400
+    # Check expiry
+    if not user.code_expiry or datetime.utcnow() > user.code_expiry:
+        return jsonify({"error":"Code expired"}), 400
+    # Validate password
+    if len(new_password) < 6 :
+        return jsonify({"error":"Password Must be more than 6 characters"}), 400
+    # Update password
+    user.password = generate_password_hash(new_password)
+    # Clear reset code
+    user.verification_code = None
+    user.code_expiry = None
+
+    db.session.commit()
+    
+    return jsonify({"message":"Password reset successfully"}),200
+
+
+
+
+
+
+
+
+
+    
+    
+    
 
 
 
