@@ -222,9 +222,8 @@ def login():
 
 @api_auth.route("/login/google")
 def google_login():
-    redirect_uri = url_for("api_auth.google_callback", _external=True)
+    redirect_uri = "http://127.0.0.1:5000/api/auth/login/google/callback"
     return oauth.google.authorize_redirect(redirect_uri)
-
 
 @api_auth.route("/login/google/callback")
 def google_callback():
@@ -245,7 +244,6 @@ def google_callback():
             if user:
                 user.auth_provider = 'both'
                 user.google_id = google_id
-
                 db.session.commit()
             else:
                 # Brand new user - create with Google
@@ -257,8 +255,8 @@ def google_callback():
                     auth_provider='google',
                     google_id=google_id
                 )
-            db.session.add(user)
-            db.session.commit()
+                db.session.add(user)
+                db.session.commit()
 
         jwt_token = jwt.encode({
             'user_id': user.id,
@@ -266,20 +264,13 @@ def google_callback():
             'exp': datetime.utcnow() + timedelta(hours=24)
         }, current_app.config['SECRET_KEY'], algorithm='HS256')
 
-        return jsonify({
-            "message": "Google Login Successful",
-            "token": jwt_token,
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "auth_provider": user.auth_provider
-            }
-        }), 200
+        # Redirect to frontend dashboard with token
+        frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5000')
+        redirect_url = f"{frontend_url}/dashboard?token={jwt_token}"
+        return redirect(redirect_url)
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-
-
 @api_auth.route("/logout", methods=["POST"])
 @token_required
 def logout(current_user):

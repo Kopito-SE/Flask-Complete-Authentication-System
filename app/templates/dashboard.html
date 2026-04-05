@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Dashboard</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+<h2>User Dashboard</h2>
+
+<div id="profile"></div>
+
+<h3>Update Profile</h3>
+
+<input id="new_username" placeholder="New Username">
+<input id="new_email" placeholder="New Email">
+
+<button onclick="updateProfile()">Update Profile</button>
+
+
+<h3>Change Password</h3>
+
+<input type="password" id="current_password" placeholder="Current Password">
+<input type="password" id="new_password2" placeholder="New Password">
+
+<button onclick="changePassword()">Change Password</button>
+
+
+<button onclick="logout()">Logout</button>
+
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+<script>
+loadProfile()
+</script>
+
+</body>
+</html>
