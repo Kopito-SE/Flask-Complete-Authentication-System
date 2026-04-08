@@ -1,6 +1,31 @@
 // API Configuration
 const API = '/api/auth';
 
+// ============ TOKEN EXTRACTION FROM URL ============
+// This MUST run before any redirect checks!
+
+(function extractTokenFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+        console.log('✅ Token found in URL, saving to localStorage');
+        
+        // Save token to localStorage
+        localStorage.setItem('token', token);
+        
+        // Clean the URL (remove token for security)
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        console.log('Token saved and URL cleaned');
+    } else {
+        console.log('No token in URL');
+    }
+})();
+
+// Now your existing code will find the token!
+
 // Helper Functions
 function escapeHtml(str) {
     if (!str) return '';

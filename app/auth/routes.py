@@ -471,3 +471,33 @@ def reset_password():
     db.session.commit()
     
     return jsonify({"message":"Password reset successfully"}),200
+@api_auth.route("/dashboard")
+def dashboard():
+    # Get token from URL
+    token = request.args.get('token')
+    
+    if not token:
+        return jsonify({"error": "No token provided"}), 401
+    
+    try:
+        # Verify token
+        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+        user = User.query.get(data["user_id"])
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Return dashboard HTML or JSON
+        return jsonify({
+            "message": f"Welcome to your dashboard, {user.username}!",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+        }), 200
+        
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 401
