@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, request, redirect, url_for, jsonify, current_app 
 from authlib.integrations.flask_client import OAuth
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,6 +10,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from ..models import User
 from .. import db, mail  # Added mail import
+import os
 
 # Api Blueprint
 api_auth = Blueprint("api_auth", __name__, url_prefix="/api/auth")
@@ -221,10 +224,14 @@ def login():
 # ---------------- GOOGLE LOGIN ---------------- #
 
 @api_auth.route("/login/google")
-def google_login():
-    redirect_uri = "http://127.0.0.1:5000/api/auth/login/google/callback"
-    return oauth.google.authorize_redirect(redirect_uri)
 
+
+def google_login():
+    redirect_uri = os.environ.get(
+        'GOOGLE_REDIRECT_URI',
+        'http://127.0.0.1:5000/api/auth/login/google/callback'
+    )
+    return oauth.google.authorize_redirect(redirect_uri)
 @api_auth.route("/login/google/callback")
 def google_callback():
     try:
